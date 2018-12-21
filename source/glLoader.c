@@ -226,7 +226,6 @@ void configureOpenGL(ContextData* cdata)
     }
 
     glXMakeCurrent(cdata->display, cdata->window, cdata->ctx);
-
 }
 
 void clearConfigurationOfOpenGL(ContextData* cdata)

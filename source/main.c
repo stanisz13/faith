@@ -18,19 +18,12 @@ int main(int argc, char* argv[])
     
     configureOpenGL(&contextData);
 
-    logS(glGetString(GL_VERSION));
-    
-    glClearColor(0, 0.5, 1, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glXSwapBuffers (contextData.display, contextData.window);
-
-    sleep(1);
-
-    glClearColor(1, 0.5, 0, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glXSwapBuffers(contextData.display, contextData.window);
-
-    sleep(1);
+    while(1)
+    {
+        glClearColor(0, 0.5, 1, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glXSwapBuffers (contextData.display, contextData.window);
+    }
 
     clearConfigurationOfOpenGL(&contextData);
     
