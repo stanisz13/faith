@@ -9,8 +9,8 @@ int main(int argc, char* argv[])
     contextData.minimalGLXVersionMinor = 3;
     contextData.minimalGLVersionMajor = 3;
     contextData.minimalGLVersionMinor = 3;
-    contextData.windowWidth = 1600;
-    contextData.windowHeight = 900;
+    contextData.windowWidth = 600;
+    contextData.windowHeight = 600;
     contextData.name = "Faith";
     
     configureOpenGL(&contextData);
@@ -20,11 +20,16 @@ int main(int argc, char* argv[])
     unsigned* pixels = (unsigned*)malloc(pixelsSize);
 
     unsigned* running = pixels;
-    for (unsigned y = 0; y < contextData.windowHeight; ++y)
+    unsigned y, x;
+    for (y = 0; y < contextData.windowHeight; ++y)
     {
-        for (unsigned x = 0; x < contextData.windowWidth; ++x)
+        for (x = 0; x < contextData.windowWidth; ++x)
         {
-            *running = 0x00FF00FF;
+            *running = 0x00000000;
+            
+            if (x*x + y*y < 300*300)
+                *running = 0x00FF00FF;
+
             ++running;
         }
     }
