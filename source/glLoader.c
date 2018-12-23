@@ -48,7 +48,13 @@ void configureOpenGL(ContextData* cdata)
 {
     // Open a comminication to X server with default screen name.
     cdata->display = XOpenDisplay(NULL);
-  
+
+#if 0
+    XSynchronize(cdata->display, 0);
+#else
+    XSynchronize(cdata->display, 1);
+#endif
+    
     if (!cdata->display)
     {
         logError("Unable to start communication with X server!");
@@ -98,10 +104,12 @@ void configureOpenGL(ContextData* cdata)
     if (!fbc)
     {
         logError("Failed to retrieve any framebuffer config");
-        exit(1);
+        exit(0);
     }
     
+#if 0
     printf("Found %d matching framebuffer configs\n", fbcount);
+#endif
 
     // Pick the framebuffer config/visual with the most samples per pixel
     int best_fbc = -1, worst_fbc = -1, best_num_samp = -1, worst_num_samp = 999;
@@ -115,11 +123,11 @@ void configureOpenGL(ContextData* cdata)
             int samp_buf, samples;
             glXGetFBConfigAttrib(cdata->display, fbc[i], GLX_SAMPLE_BUFFERS, &samp_buf);
             glXGetFBConfigAttrib(cdata->display, fbc[i], GLX_SAMPLES, &samples);
-      
+#if 0     
             printf("  Matching fbconfig %d, visual ID 0x%2x: SAMPLE_BUFFERS = %d,"
-                    " SAMPLES = %d\n", 
-                    i, vi->visualid, samp_buf, samples);
-
+                   " SAMPLES = %d\n", 
+                   i, vi->visualid, samp_buf, samples);
+#endif
             if (best_fbc < 0 || samp_buf && samples > best_num_samp)
                 best_fbc = i, best_num_samp = samples;
             if (worst_fbc < 0 || !samp_buf || samples < worst_num_samp)
@@ -134,8 +142,11 @@ void configureOpenGL(ContextData* cdata)
     XFree(fbc);
 
     XVisualInfo *vi = glXGetVisualFromFBConfig(cdata->display, bestFbc);
-    printf("Chosen visual ID = 0x%x\n", vi->visualid);
 
+#if 0
+    printf("Chosen visual ID = 0x%x\n", vi->visualid);
+#endif
+    
     XSetWindowAttributes swa;
     swa.colormap = cdata->cmap = XCreateColormap(cdata->display,
                                            RootWindow(cdata->display, vi->screen), 
@@ -215,6 +226,7 @@ void configureOpenGL(ContextData* cdata)
         exit(0);
     }
 
+#if 0
     // Verifying that context is a direct context
     if (!glXIsDirect(cdata->display, cdata->ctx))
     {
@@ -224,7 +236,8 @@ void configureOpenGL(ContextData* cdata)
     {
         logS("Direct GLX rendering context obtained");
     }
-
+#endif
+    
     glXMakeCurrent(cdata->display, cdata->window, cdata->ctx);
 }
 

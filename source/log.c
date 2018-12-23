@@ -16,3 +16,8 @@ void logU(const unsigned s)
 {
     printf("%u\n", s);
 }
+
+void logI(const int s)
+{
+    printf("%d\n", s);
+}

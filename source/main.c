@@ -18,8 +18,37 @@ int main(int argc, char* argv[])
     
     configureOpenGL(&contextData);
 
+    Atom wmDeleteMessage = XInternAtom(contextData.display, "WM_DELETE_WINDOW", 0);
+    XSetWMProtocols(contextData.display, contextData.window, &wmDeleteMessage, 1);
+
     while(1)
-    {
+    {        
+        XEvent event;
+        
+        while (XPending(contextData.display))
+        {
+            XNextEvent(contextData.display, &event);
+            switch (event.type)
+            {
+                case ClientMessage:
+                    if (event.xclient.data.l[0] == wmDeleteMessage)
+                        isRunning = 0;
+                    break;
+            }
+#if 0
+            if (event.type == DestroyNotify)
+            {
+                isRunning = 0;
+                break;
+            }
+#endif
+        }
+
+        if (isRunning == 0)
+        {
+            break;
+        }
+        
         glClearColor(0, 0.5, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         glXSwapBuffers (contextData.display, contextData.window);
