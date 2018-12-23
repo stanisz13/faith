@@ -1,4 +1,7 @@
-#include "glLoader.h"
+#include "graphics.h"
+
+#define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
+#define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)
 (Display*, GLXFBConfig, GLXContext, Bool, const int*);
@@ -237,7 +240,10 @@ void configureOpenGL(ContextData* cdata)
         logS("Direct GLX rendering context obtained");
     }
 #endif
-    
+
+    cdata->deleteMessage = XInternAtom(cdata->display, "WM_DELETE_WINDOW", 0);
+    XSetWMProtocols(cdata->display, cdata->window, &cdata->deleteMessage, 1);
+
     glXMakeCurrent(cdata->display, cdata->window, cdata->ctx);
 }
 
@@ -251,3 +257,103 @@ void clearConfigurationOfOpenGL(ContextData* cdata)
     XCloseDisplay(cdata->display);
 }
 
+void loadFunctionPointers()
+{
+    //glGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC)glXGetProcAddress("glGenFramebuffers");
+    //glBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC)glXGetProcAddress("glBindFramebuffer");
+    //glFramebufferTexture2D = (PFNGLFRAMEBUFFERTEXTURE2DPROC)glXGetProcAddress("glFramebufferTexture2D");
+
+    
+    glCreateShader = (PFNGLCREATESHADERPROC)glXGetProcAddress("glCreateShader");
+    glShaderSource = (PFNGLSHADERSOURCEPROC)glXGetProcAddress("glShaderSource");
+    glCompileShader = (PFNGLCOMPILESHADERPROC)glXGetProcAddress("glCompileShader");
+    glGetShaderiv = (PFNGLGETSHADERIVPROC)glXGetProcAddress("glGetShaderiv");
+    glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)glXGetProcAddress("glGetShaderInfoLog");
+    glCreateProgram = (PFNGLCREATEPROGRAMPROC)glXGetProcAddress("glCreateProgram");
+    glAttachShader = (PFNGLATTACHSHADERPROC)glXGetProcAddress("glAttachShader");
+    glLinkProgram = (PFNGLLINKPROGRAMPROC)glXGetProcAddress("glLinkProgram");
+    glGetProgramiv = (PFNGLGETPROGRAMIVPROC)glXGetProcAddress("glGetProgramiv");
+    glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)glXGetProcAddress("glGetProgramInfoLog");
+    glDeleteShader = (PFNGLDELETESHADERPROC)glXGetProcAddress("glDeleteShader");
+    glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)glXGetProcAddress("glGenVertexArrays");
+    glGenBuffers = (PFNGLGENBUFFERSPROC)glXGetProcAddress("glGenBuffers");
+    glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)glXGetProcAddress("glGenVertexArrays");
+    glBindBuffer = (PFNGLBINDBUFFERPROC)glXGetProcAddress("glBindBuffer");
+    glBufferData = (PFNGLBUFFERDATAPROC)glXGetProcAddress("glBufferData");
+    glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)glXGetProcAddress("glVertexAttribPointer");
+    glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)glXGetProcAddress("glEnableVertexAttribArray");
+    glUseProgram = (PFNGLUSEPROGRAMPROC)glXGetProcAddress("glUseProgram");
+    glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)glXGetProcAddress("glBindVertexArray");
+}
+
+
+unsigned createBasicProgram()
+{
+    unsigned vertex, fragment;
+    unsigned program;
+    int success;
+    char infoLog[512];
+    
+    const char* vsCode[] =
+        {
+            "#version 330 core\n"
+            "layout (location = 0) in vec3 aPos;\n"
+            "layout (location = 1) in vec2 aTexCoord;\n"
+            "out vec2 TexCoord;\n"
+            "void main()\n"
+            "{gl_Position = vec4(aPos, 1.0);\n"
+            "TexCoord = aTexCoord;}\n"
+        };
+    
+    vertex = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex, 1, vsCode, NULL);
+    glCompileShader(vertex);
+
+    glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
+    if(!success)
+    {
+        glGetShaderInfoLog(vertex, 512, NULL, infoLog);
+        printf("vertex shader error: %s\n", infoLog);
+    };
+
+    
+    const char* fsCode[] =
+        {
+            "#version 330 core\n"
+            "out vec4 FragColor;\n"
+            "in vec2 TexCoord;\n"
+            "uniform sampler2D ourTexture;\n"
+            "void main()\n"
+            "{\n"
+            "FragColor = texture(ourTexture, TexCoord);\n"
+            "}\n"
+        };
+    
+    fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment, 1, fsCode, NULL);
+    glCompileShader(fragment);
+
+    glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
+    if(!success)
+    {
+        glGetShaderInfoLog(fragment, 512, NULL, infoLog);
+        printf("fragment shader error: %s\n", infoLog);
+    };
+
+    program = glCreateProgram();
+    glAttachShader(program, vertex);
+    glAttachShader(program, fragment);
+    glLinkProgram(program);
+
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if(!success)
+    {
+        glGetProgramInfoLog(program, 512, NULL, infoLog);
+        printf("%s\n", infoLog);     
+    }
+
+    glDeleteShader(vertex);
+    glDeleteShader(fragment);
+
+    return program;
+}
