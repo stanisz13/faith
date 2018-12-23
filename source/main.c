@@ -2,6 +2,100 @@
 
 int isRunning = 1;
 
+typedef struct
+{
+    unsigned a, b;
+} pair;
+
+void update(unsigned* sand, unsigned* pixels, const ContextData* cdata)
+{
+    unsigned y, x;
+    pair* toProcess = (pair*)malloc(sizeof(pair) * cdata->windowWidth * cdata->windowHeight);
+    unsigned processIdx = 0;
+
+    unsigned* running = sand;
+    for (y = 0; y < cdata->windowHeight; ++y)
+    {
+        for (x = 0; x < cdata->windowWidth; ++x)
+        {
+            if (*running > 3)
+            {
+                pair cur;
+                cur.a = y;
+                cur.b = x;
+                toProcess[processIdx++] = cur;
+            }
+            
+            ++running;
+        }
+    }
+
+    for (y = 0; y < processIdx; ++y)
+    {
+        pair cur = toProcess[y];
+        
+        unsigned* hit = sand + cur.a * cdata->windowWidth + cur.b;
+        *hit -= 4;
+        
+        if (cur.a > 0)
+        {
+            unsigned* top = sand + (cur.a - 1) * cdata->windowWidth + cur.b;
+            ++*top;
+        }
+        if (cur.a < cdata->windowHeight - 1)
+        {
+            unsigned* bot = sand + (cur.a + 1) + cdata->windowWidth + cur.b;
+            ++*bot;
+        }
+        if (cur.b > 0)
+        {
+            unsigned* left = sand + cur.a * cdata->windowWidth + cur.b - 1;
+            ++*left;
+        }
+        if (cur.b < cdata->windowWidth - 1)
+        {
+            unsigned* right = sand + cur.a * cdata->windowWidth + cur.b + 1;
+            ++*right;
+        }
+    }
+
+    free(toProcess);
+
+    running = sand;
+    unsigned* running2 = pixels;
+    for (y = 0; y < cdata->windowHeight; ++y)
+    {
+        for (x = 0; x < cdata->windowWidth; ++x)
+        {
+            *running2 = 0x00000000;
+
+            switch(*running )
+            {
+                case 0:
+                    *running2 = 0x00FF0000;
+                    break;
+                case 1:
+                    *running2 = 0x0000FF00;
+                    break;
+                case 2:
+                    *running2 = 0x000000FF;
+                    break;
+                case 3:
+                    *running2 = 0x55555555;
+                    break;
+                default:
+                    *running2 = 0x00000000;
+                    break;
+                    
+            }
+            
+            ++running;
+            ++running2;
+        }
+    }
+
+}
+
 int main(int argc, char* argv[])
 {
     ContextData contextData;
@@ -9,8 +103,8 @@ int main(int argc, char* argv[])
     contextData.minimalGLXVersionMinor = 3;
     contextData.minimalGLVersionMajor = 3;
     contextData.minimalGLVersionMinor = 3;
-    contextData.windowWidth = 600;
-    contextData.windowHeight = 600;
+    contextData.windowWidth = 300;
+    contextData.windowHeight = 300;
     contextData.name = "Faith";
     
     configureOpenGL(&contextData);
@@ -18,21 +112,27 @@ int main(int argc, char* argv[])
 
     unsigned pixelsSize = contextData.windowHeight * contextData.windowWidth * sizeof(unsigned);
     unsigned* pixels = (unsigned*)malloc(pixelsSize);
-
-    unsigned* running = pixels;
+    unsigned* sand = (unsigned*)malloc(pixelsSize);
+    
+    unsigned* running = sand;
     unsigned y, x;
+
     for (y = 0; y < contextData.windowHeight; ++y)
     {
         for (x = 0; x < contextData.windowWidth; ++x)
         {
-            *running = 0x00000000;
+            *running = 0;
             
-            if (x*x + y*y < 300*300)
-                *running = 0x00FF00FF;
-
+            if (x == contextData.windowWidth / 2 && y == contextData.windowHeight/2)
+            {
+                *running = 4000000;
+            }
+            
             ++running;
         }
     }
+
+    
     
     unsigned texture;
     glGenTextures(1, &texture);
@@ -103,8 +203,12 @@ int main(int argc, char* argv[])
         glClearColor(0, 0.5, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glBindTexture(GL_TEXTURE_2D, texture);
+        update(sand, pixels, &contextData);
 
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, contextData.windowWidth, contextData.windowHeight,
+                     0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    
+        glBindTexture(GL_TEXTURE_2D, texture);
         glUseProgram(basicProgram);
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLE_STRIP, 6, GL_UNSIGNED_INT, 0);
@@ -116,6 +220,7 @@ int main(int argc, char* argv[])
     clearConfigurationOfOpenGL(&contextData);
 
     free(pixels);
-    
+    free(sand);
+
     return 0;
 }
