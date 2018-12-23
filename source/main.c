@@ -25,36 +25,38 @@ void update(unsigned* sand, unsigned* pixels, const ContextData* cdata)
                 cur.b = x;
                 toProcess[processIdx++] = cur;
             }
-            
+            //  printf("%d ", *running);
             ++running;
         }
+        //      printf("\n");
     }
+//    printf("\n\n");
 
     for (y = 0; y < processIdx; ++y)
     {
         pair cur = toProcess[y];
-        
+
         unsigned* hit = sand + cur.a * cdata->windowWidth + cur.b;
         *hit -= 4;
         
         if (cur.a > 0)
         {
-            unsigned* top = sand + (cur.a - 1) * cdata->windowWidth + cur.b;
+            unsigned* top = hit - cdata->windowWidth;
             ++*top;
         }
         if (cur.a < cdata->windowHeight - 1)
         {
-            unsigned* bot = sand + (cur.a + 1) + cdata->windowWidth + cur.b;
+            unsigned* bot = hit + cdata->windowHeight;
             ++*bot;
         }
         if (cur.b > 0)
         {
-            unsigned* left = sand + cur.a * cdata->windowWidth + cur.b - 1;
+            unsigned* left = hit - 1;
             ++*left;
         }
         if (cur.b < cdata->windowWidth - 1)
         {
-            unsigned* right = sand + cur.a * cdata->windowWidth + cur.b + 1;
+            unsigned* right = hit + 1;
             ++*right;
         }
     }
@@ -67,12 +69,10 @@ void update(unsigned* sand, unsigned* pixels, const ContextData* cdata)
     {
         for (x = 0; x < cdata->windowWidth; ++x)
         {
-            *running2 = 0x00000000;
-
-            switch(*running )
+            switch(*running)
             {
                 case 0:
-                    *running2 = 0x00FF0000;
+                    *running2 = 0x55542325;
                     break;
                 case 1:
                     *running2 = 0x0000FF00;
@@ -81,7 +81,7 @@ void update(unsigned* sand, unsigned* pixels, const ContextData* cdata)
                     *running2 = 0x000000FF;
                     break;
                 case 3:
-                    *running2 = 0x55555555;
+                    *running2 = 0x00FF0000;
                     break;
                 default:
                     *running2 = 0x00000000;
@@ -103,8 +103,8 @@ int main(int argc, char* argv[])
     contextData.minimalGLXVersionMinor = 3;
     contextData.minimalGLVersionMajor = 3;
     contextData.minimalGLVersionMinor = 3;
-    contextData.windowWidth = 300;
-    contextData.windowHeight = 300;
+    contextData.windowWidth = 501;
+    contextData.windowHeight = 501;
     contextData.name = "Faith";
     
     configureOpenGL(&contextData);
@@ -203,18 +203,19 @@ int main(int argc, char* argv[])
         glClearColor(0, 0.5, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        for (unsigned i = 0; i < 100; ++i)
         update(sand, pixels, &contextData);
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, contextData.windowWidth, contextData.windowHeight,
                      0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-    
+        
         glBindTexture(GL_TEXTURE_2D, texture);
         glUseProgram(basicProgram);
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLE_STRIP, 6, GL_UNSIGNED_INT, 0);
 
-        
         glXSwapBuffers(contextData.display, contextData.window);
+        //    sleep(1);
     }
 
     clearConfigurationOfOpenGL(&contextData);
