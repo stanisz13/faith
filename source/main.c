@@ -189,22 +189,21 @@ void addEquilateralSources(const unsigned count, const unsigned radius,
 {
     const float PI = 3.14159265358f;
     const float alpha = 360.0f / count;
-    const float alphaInRad = (PI * alpha) / 180.0f;
-    const float edge = sqrt(2) * radius * (1 - cos(alphaInRad));
     const float centerX = windowWidth / 2;
     const float centerY = windowHeight / 2;
     
     for (unsigned i = 0; i < count; ++i)
     {
-        const float angle = 90.0f - alpha * i;
+        const float angle = 90.0f - alpha * (i + 1);
         const float angleInRad = (PI * angle) / 180.0f;
-    
-        const float dx = sqrt(2) * radius * (1 - cos(angleInRad));
-        const float dy = sqrt(2) * radius * (1 - sin(angleInRad));
+
+        const float angleX = cos(angleInRad);
+        const float angleY = sin(angleInRad);
+        const float dx = radius * angleX;
+        const float dy = radius * angleY;
 
         const float x = centerX + dx;
         const float y = centerY + dy;
-
         addSource(x, y, sand);
     }
 }
