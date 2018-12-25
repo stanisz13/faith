@@ -153,7 +153,7 @@ void updateColors(ContextData* cdata)
             switch(now->sand)
             {
                 case 0:
-                    colors[y * cdata->windowWidth + x] = RGBAtoUnsigned(100, 100, 50, 0);
+                    colors[y * cdata->windowWidth + x] = RGBAtoUnsigned(20, 10, 30, 0);
                     break;
                 case 1:
                     colors[y * cdata->windowWidth + x] = RGBAtoUnsigned(50, 20, 10, 0);
@@ -174,7 +174,6 @@ void updateColors(ContextData* cdata)
 
 int main(int argc, char* argv[])
 {
-    printf("%d %d\n", 0x000000FF, RGBAtoUnsigned(255, 0, 0, 0));
     ContextData contextData;
     contextData.minimalGLXVersionMajor = 1;
     contextData.minimalGLXVersionMinor = 3;
@@ -189,13 +188,21 @@ int main(int argc, char* argv[])
 
     unsigned y, x;
 
-    map[contextData.windowWidth / 2][contextData.windowHeight / 2].sand = 20000000;
-    map[contextData.windowWidth / 2][contextData.windowHeight / 2].flag = 1;
     Pair firstPair;
     firstPair.x = contextData.windowWidth/2;
     firstPair.y = contextData.windowHeight/2;
+    map[firstPair.x][firstPair.y].sand = 20000000;
+    map[firstPair.x][firstPair.y].flag = 1;
     prevProcess[0] = firstPair;
-    prevProcessIdx = 1;
+
+    Pair secondPair;
+    secondPair.x = firstPair.x + contextData.windowWidth / 8;
+    secondPair.y = firstPair.y;
+    map[secondPair.x][secondPair.y].sand = 200000000;
+    map[secondPair.x][secondPair.y].flag = 1;
+    prevProcess[1] = secondPair;
+    
+    prevProcessIdx = 2;
     
     unsigned texture;
     glGenTextures(1, &texture);
@@ -265,7 +272,7 @@ int main(int argc, char* argv[])
         glClearColor(0, 0.5, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        unsigned sandUpdatesPerFrame = 100;
+        unsigned sandUpdatesPerFrame = 1000;
         for (unsigned i = 0; i < sandUpdatesPerFrame; ++i)
         {
             update(&contextData);
