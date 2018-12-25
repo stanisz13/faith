@@ -187,6 +187,12 @@ void addEquilateralSources(const unsigned count, const unsigned radius,
                            const unsigned windowWidth, const unsigned windowHeight,
                            const unsigned sand)
 {
+    if (count == 1)
+    {
+        addSource(windowWidth / 2, windowHeight / 2, sand);
+        return;
+    }
+    
     const float PI = 3.14159265358f;
     const float alpha = 360.0f / count;
     const float centerX = windowWidth / 2;
@@ -204,7 +210,7 @@ void addEquilateralSources(const unsigned count, const unsigned radius,
 
         const float x = centerX + dx;
         const float y = centerY + dy;
-        addSource(x, y, sand);
+        addSource((unsigned)x, (unsigned)y, sand);
     }
 }
 
@@ -229,7 +235,7 @@ int main(int argc, char* argv[])
     addSource(contextData.windowWidth * 0.60f, contextData.windowHeight / 2, 2000000);
 #endif
 
-    addEquilateralSources(10, 100, contextData.windowWidth, contextData.windowHeight, 2000000);
+    addEquilateralSources(3, 100, contextData.windowWidth, contextData.windowHeight, 2000000);
     
     unsigned texture;
     glGenTextures(1, &texture);
