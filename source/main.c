@@ -1,99 +1,175 @@
 #include "graphics.h"
 
-int isRunning = 1;
+typedef struct
+{
+    unsigned sand;
+    unsigned flag;
+    
+} Tile;
 
 typedef struct
 {
-    unsigned a, b;
-} pair;
+    unsigned x, y;
+} Pair;
 
-void update(unsigned* sand, unsigned* pixels, const ContextData* cdata)
+#define MAX_WIDTH 1000
+#define MAX_HEIGHT 1000
+
+int isRunning = 1;
+
+Tile map[MAX_WIDTH][MAX_HEIGHT];
+unsigned colors[MAX_WIDTH * MAX_HEIGHT];
+Pair prevProcess[MAX_WIDTH * MAX_HEIGHT];
+Pair toProcess[MAX_WIDTH * MAX_HEIGHT];
+unsigned prevProcessIdx;
+unsigned toProcessIdx;
+
+void update(const ContextData* cdata)
 {
     unsigned y, x;
-    pair* toProcess = (pair*)malloc(sizeof(pair) * cdata->windowWidth * cdata->windowHeight);
-    unsigned processIdx = 0;
-
-    unsigned* running = sand;
-    for (y = 0; y < cdata->windowHeight; ++y)
-    {
-        for (x = 0; x < cdata->windowWidth; ++x)
-        {
-            if (*running > 3)
-            {
-                pair cur;
-                cur.a = y;
-                cur.b = x;
-                toProcess[processIdx++] = cur;
-            }
-            //  printf("%d ", *running);
-            ++running;
-        }
-        //      printf("\n");
-    }
-//    printf("\n\n");
-
-    for (y = 0; y < processIdx; ++y)
-    {
-        pair cur = toProcess[y];
-
-        unsigned* hit = sand + cur.a * cdata->windowWidth + cur.b;
-        *hit -= 4;
+    toProcessIdx = 0;
         
-        if (cur.a > 0)
+    for (y = 0; y < prevProcessIdx; ++y)
+    {
+        Pair center = prevProcess[y];
+
+        Tile* hit = &map[center.x][center.y];
+        hit->sand -= 4;
+
+        if (hit->sand > 3)
         {
-            unsigned* top = hit - cdata->windowWidth;
-            ++*top;
+            toProcess[toProcessIdx++] = center;        
         }
-        if (cur.a < cdata->windowHeight - 1)
+        else
         {
-            unsigned* bot = hit + cdata->windowHeight;
-            ++*bot;
+            map[center.x][center.y].flag = 0;
         }
-        if (cur.b > 0)
+        
+        if (center.y > 0)
         {
-            unsigned* left = hit - 1;
-            ++*left;
+            Tile* top = &map[center.x][center.y - 1];
+            Pair cur;
+            cur.x = center.x;
+            cur.y = center.y - 1;
+           
+            if (++top->sand > 3)
+            {
+                if(top->flag == 0)
+                {
+                    toProcess[toProcessIdx++] = cur;
+
+                    map[cur.x][cur.y].flag = 1;
+                }
+            }
+            else
+            {
+                map[cur.x][cur.y].flag = 0;
+            }
         }
-        if (cur.b < cdata->windowWidth - 1)
+        if (center.y < cdata->windowHeight - 1)
         {
-            unsigned* right = hit + 1;
-            ++*right;
+            Tile* bot = &map[center.x][center.y + 1];
+            Pair cur;
+            cur.x = center.x;
+            cur.y = center.y + 1;
+
+            if (++bot->sand > 3)
+            {
+                if (bot->flag == 0)
+                {
+                    toProcess[toProcessIdx++] = cur;
+
+                    map[cur.x][cur.y].flag = 1;
+                }
+            }
+            else
+            {
+                map[cur.x][cur.y].flag = 0;
+            }
+        }
+        if (center.x > 0)
+        {
+            Tile* left = &map[center.x - 1][center.y];
+            Pair cur;
+            cur.x = center.x - 1;
+            cur.y = center.y;
+             
+            if (++left->sand > 3)
+            {
+                if (left->flag == 0)
+                {
+                    toProcess[toProcessIdx++] = cur;
+
+                    map[cur.x][cur.y].flag = 1;
+
+                }
+            }
+            else
+            {
+                map[cur.x][cur.y].flag = 0;
+            }
+        }
+        if (center.x < cdata->windowWidth - 1)
+        {
+            Tile* right = &map[center.x + 1][center.y];
+            Pair cur;
+            cur.x = center.x + 1;
+            cur.y = center.y;
+             
+            if (++right->sand > 3)
+            {
+                if (right->flag == 0)
+                {
+                    toProcess[toProcessIdx++] = cur;
+
+                    map[cur.x][cur.y].flag = 1;
+
+                }
+            }
+            else
+            {
+                map[cur.x][cur.y].flag = 0;
+            }
         }
     }
 
-    free(toProcess);
+    for (unsigned i = 0; i < toProcessIdx; ++i)
+    {
+        prevProcess[i] = toProcess[i];
+    }
 
-    running = sand;
-    unsigned* running2 = pixels;
+    prevProcessIdx = toProcessIdx;
+}
+
+void updateColors(ContextData* cdata)
+{
+    unsigned x, y;
+    
     for (y = 0; y < cdata->windowHeight; ++y)
     {
         for (x = 0; x < cdata->windowWidth; ++x)
         {
-            switch(*running)
+            Tile* now = &map[x][y];
+            switch(now->sand)
             {
                 case 0:
-                    *running2 = 0x55542325;
+                    colors[y * cdata->windowWidth + x] = 0x55542325;
                     break;
                 case 1:
-                    *running2 = 0x0000FF00;
+                    colors[y * cdata->windowWidth + x] = 0x0000FF00;
                     break;
                 case 2:
-                    *running2 = 0x000000FF;
+                    colors[y * cdata->windowWidth + x] = 0x000000FF;
                     break;
                 case 3:
-                    *running2 = 0x00FF0000;
+                    colors[y * cdata->windowWidth + x] = 0x00FF0000;
                     break;
                 default:
-                    *running2 = 0x00000000;
+                    colors[y * cdata->windowWidth + x] = 0x00000000;
                     break;
-                    
             }
-            
-            ++running;
-            ++running2;
         }
     }
-
 }
 
 int main(int argc, char* argv[])
@@ -103,43 +179,29 @@ int main(int argc, char* argv[])
     contextData.minimalGLXVersionMinor = 3;
     contextData.minimalGLVersionMajor = 3;
     contextData.minimalGLVersionMinor = 3;
-    contextData.windowWidth = 501;
-    contextData.windowHeight = 501;
+    contextData.windowWidth = 300;
+    contextData.windowHeight = 300;
     contextData.name = "Faith";
     
     configureOpenGL(&contextData);
     loadFunctionPointers();
 
-    unsigned pixelsSize = contextData.windowHeight * contextData.windowWidth * sizeof(unsigned);
-    unsigned* pixels = (unsigned*)malloc(pixelsSize);
-    unsigned* sand = (unsigned*)malloc(pixelsSize);
-    
-    unsigned* running = sand;
     unsigned y, x;
 
-    for (y = 0; y < contextData.windowHeight; ++y)
-    {
-        for (x = 0; x < contextData.windowWidth; ++x)
-        {
-            *running = 0;
-            
-            if (x == contextData.windowWidth / 2 && y == contextData.windowHeight/2)
-            {
-                *running = 4000000;
-            }
-            
-            ++running;
-        }
-    }
-
-    
+    map[contextData.windowWidth / 2][contextData.windowHeight / 2].sand = 2000000;
+    map[contextData.windowWidth / 2][contextData.windowHeight / 2].flag = 1;
+    Pair firstPair;
+    firstPair.x = contextData.windowWidth/2;
+    firstPair.y = contextData.windowHeight/2;
+    prevProcess[0] = firstPair;
+    prevProcessIdx = 1;
     
     unsigned texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
   
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, contextData.windowWidth, contextData.windowHeight,
-                 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+                 0, GL_RGBA, GL_UNSIGNED_BYTE, colors);
     
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
@@ -176,9 +238,8 @@ int main(int argc, char* argv[])
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    
     unsigned basicProgram = createBasicProgram();
-    
+
     while(1)
     {        
         XEvent event;
@@ -203,11 +264,16 @@ int main(int argc, char* argv[])
         glClearColor(0, 0.5, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        for (unsigned i = 0; i < 100; ++i)
-        update(sand, pixels, &contextData);
+        unsigned sandUpdatesPerFrame = 1000;
+        for (unsigned i = 0; i < sandUpdatesPerFrame; ++i)
+        {
+            update(&contextData);
+        }
 
+        updateColors(&contextData);
+        
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, contextData.windowWidth, contextData.windowHeight,
-                     0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+                     0, GL_RGBA, GL_UNSIGNED_BYTE, colors);
         
         glBindTexture(GL_TEXTURE_2D, texture);
         glUseProgram(basicProgram);
@@ -215,13 +281,10 @@ int main(int argc, char* argv[])
         glDrawElements(GL_TRIANGLE_STRIP, 6, GL_UNSIGNED_INT, 0);
 
         glXSwapBuffers(contextData.display, contextData.window);
-        //    sleep(1);
+//        sleep(1);
     }
 
     clearConfigurationOfOpenGL(&contextData);
-
-    free(pixels);
-    free(sand);
 
     return 0;
 }
