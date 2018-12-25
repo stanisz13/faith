@@ -12,8 +12,8 @@ typedef struct
     unsigned x, y;
 } Pair;
 
-#define MAX_WIDTH 1000
-#define MAX_HEIGHT 1000
+#define MAX_WIDTH 2000
+#define MAX_HEIGHT 2000
 
 int isRunning = 1;
 
@@ -153,19 +153,19 @@ void updateColors(ContextData* cdata)
             switch(now->sand)
             {
                 case 0:
-                    colors[y * cdata->windowWidth + x] = 0x55542325;
+                    colors[y * cdata->windowWidth + x] = RGBAtoUnsigned(100, 100, 50, 0);
                     break;
                 case 1:
-                    colors[y * cdata->windowWidth + x] = 0x0000FF00;
+                    colors[y * cdata->windowWidth + x] = RGBAtoUnsigned(50, 20, 10, 0);
                     break;
                 case 2:
-                    colors[y * cdata->windowWidth + x] = 0x000000FF;
+                    colors[y * cdata->windowWidth + x] = RGBAtoUnsigned(100, 0, 180, 0);
                     break;
                 case 3:
-                    colors[y * cdata->windowWidth + x] = 0x00FF0000;
+                    colors[y * cdata->windowWidth + x] = RGBAtoUnsigned(0, 200, 50, 0);
                     break;
                 default:
-                    colors[y * cdata->windowWidth + x] = 0x00000000;
+                    colors[y * cdata->windowWidth + x] = RGBAtoUnsigned(255, 0, 0, 0);
                     break;
             }
         }
@@ -174,13 +174,14 @@ void updateColors(ContextData* cdata)
 
 int main(int argc, char* argv[])
 {
+    printf("%d %d\n", 0x000000FF, RGBAtoUnsigned(255, 0, 0, 0));
     ContextData contextData;
     contextData.minimalGLXVersionMajor = 1;
     contextData.minimalGLXVersionMinor = 3;
     contextData.minimalGLVersionMajor = 3;
     contextData.minimalGLVersionMinor = 3;
-    contextData.windowWidth = 300;
-    contextData.windowHeight = 300;
+    contextData.windowWidth = 1600;
+    contextData.windowHeight = 900;
     contextData.name = "Faith";
     
     configureOpenGL(&contextData);
@@ -188,7 +189,7 @@ int main(int argc, char* argv[])
 
     unsigned y, x;
 
-    map[contextData.windowWidth / 2][contextData.windowHeight / 2].sand = 2000000;
+    map[contextData.windowWidth / 2][contextData.windowHeight / 2].sand = 20000000;
     map[contextData.windowWidth / 2][contextData.windowHeight / 2].flag = 1;
     Pair firstPair;
     firstPair.x = contextData.windowWidth/2;
@@ -264,7 +265,7 @@ int main(int argc, char* argv[])
         glClearColor(0, 0.5, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        unsigned sandUpdatesPerFrame = 1000;
+        unsigned sandUpdatesPerFrame = 100;
         for (unsigned i = 0; i < sandUpdatesPerFrame; ++i)
         {
             update(&contextData);

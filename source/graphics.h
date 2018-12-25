@@ -66,4 +66,7 @@ void loadFunctionPointers();
 
 unsigned createBasicProgram();
 
+unsigned RGBAtoUnsigned(const unsigned char r, const unsigned char g,
+                        const unsigned char b, const unsigned char a);
+
 #endif

@@ -357,3 +357,9 @@ unsigned createBasicProgram()
 
     return program;
 }
+
+unsigned RGBAtoUnsigned(const unsigned char r, const unsigned char g,
+                        const unsigned char b, const unsigned char a)
+{
+    return (a << 24) | (b << 16) | (g << 8) | r;    
+}
