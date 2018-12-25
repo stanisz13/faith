@@ -1,4 +1,5 @@
 #include "graphics.h"
+#include <math.h>
 
 typedef struct
 {
@@ -172,6 +173,42 @@ void updateColors(ContextData* cdata)
     }
 }
 
+void addSource(const unsigned posX, const unsigned posY, const unsigned sand)
+{
+    Pair p;
+    p.x = posX;
+    p.y = posY;
+    map[posX][posY].sand = sand;
+    map[posX][posY].flag = 1;
+    prevProcess[prevProcessIdx++] = p;    
+}
+
+void addEquilateralSources(const unsigned count, const unsigned radius,
+                           const unsigned windowWidth, const unsigned windowHeight,
+                           const unsigned sand)
+{
+    const float PI = 3.14159265358f;
+    const float alpha = 360.0f / count;
+    const float alphaInRad = (PI * alpha) / 180.0f;
+    const float edge = sqrt(2) * radius * (1 - cos(alphaInRad));
+    const float centerX = windowWidth / 2;
+    const float centerY = windowHeight / 2;
+    
+    for (unsigned i = 0; i < count; ++i)
+    {
+        const float angle = 90.0f - alpha * i;
+        const float angleInRad = (PI * angle) / 180.0f;
+    
+        const float dx = sqrt(2) * radius * (1 - cos(angleInRad));
+        const float dy = sqrt(2) * radius * (1 - sin(angleInRad));
+
+        const float x = centerX + dx;
+        const float y = centerY + dy;
+
+        addSource(x, y, sand);
+    }
+}
+
 int main(int argc, char* argv[])
 {
     ContextData contextData;
@@ -188,21 +225,12 @@ int main(int argc, char* argv[])
 
     unsigned y, x;
 
-    Pair firstPair;
-    firstPair.x = contextData.windowWidth/2;
-    firstPair.y = contextData.windowHeight/2;
-    map[firstPair.x][firstPair.y].sand = 20000000;
-    map[firstPair.x][firstPair.y].flag = 1;
-    prevProcess[0] = firstPair;
+#if 0
+    addSource(contextData.windowWidth / 2, contextData.windowHeight / 2, 2000000);
+    addSource(contextData.windowWidth * 0.60f, contextData.windowHeight / 2, 2000000);
+#endif
 
-    Pair secondPair;
-    secondPair.x = firstPair.x + contextData.windowWidth / 8;
-    secondPair.y = firstPair.y;
-    map[secondPair.x][secondPair.y].sand = 200000000;
-    map[secondPair.x][secondPair.y].flag = 1;
-    prevProcess[1] = secondPair;
-    
-    prevProcessIdx = 2;
+    addEquilateralSources(10, 100, contextData.windowWidth, contextData.windowHeight, 2000000);
     
     unsigned texture;
     glGenTextures(1, &texture);
