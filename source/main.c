@@ -10,7 +10,8 @@ typedef struct
 
 typedef struct
 {
-    unsigned x, y;
+    unsigned x;
+    unsigned y;
 } Pair;
 
 #define MAX_WIDTH 2000
@@ -25,112 +26,106 @@ Pair toProcess[MAX_WIDTH * MAX_HEIGHT];
 unsigned prevProcessIdx;
 unsigned toProcessIdx;
 
-void update(const ContextData* cdata)
+void processOnePair(const unsigned index, const ContextData* cdata)
 {
-    unsigned y, x;
-    toProcessIdx = 0;
-        
-    for (y = 0; y < prevProcessIdx; ++y)
+    Pair center = prevProcess[index];
+
+    Tile* hit = &map[center.x][center.y];
+    hit->sand -= 4;
+
+    if (hit->sand > 3)
     {
-        Pair center = prevProcess[y];
-
-        Tile* hit = &map[center.x][center.y];
-        hit->sand -= 4;
-
-        if (hit->sand > 3)
+        toProcess[toProcessIdx++] = center;        
+    }
+    else
+    {
+        map[center.x][center.y].flag = 0;
+    }
+        
+    if (center.y > 0)
+    {
+        Tile* top = &map[center.x][center.y - 1];
+        Pair cur;
+        cur.x = center.x;
+        cur.y = center.y - 1;
+           
+        if (++top->sand > 3)
         {
-            toProcess[toProcessIdx++] = center;        
+            if(top->flag == 0)
+            {
+                toProcess[toProcessIdx++] = cur;
+
+                map[cur.x][cur.y].flag = 1;
+            }
         }
         else
         {
-            map[center.x][center.y].flag = 0;
+            map[cur.x][cur.y].flag = 0;
         }
-        
-        if (center.y > 0)
-        {
-            Tile* top = &map[center.x][center.y - 1];
-            Pair cur;
-            cur.x = center.x;
-            cur.y = center.y - 1;
-           
-            if (++top->sand > 3)
-            {
-                if(top->flag == 0)
-                {
-                    toProcess[toProcessIdx++] = cur;
+    }
+    if (center.y < cdata->windowHeight - 1)
+    {
+        Tile* bot = &map[center.x][center.y + 1];
+        Pair cur;
+        cur.x = center.x;
+        cur.y = center.y + 1;
 
-                    map[cur.x][cur.y].flag = 1;
-                }
-            }
-            else
+        if (++bot->sand > 3)
+        {
+            if (bot->flag == 0)
             {
-                map[cur.x][cur.y].flag = 0;
+                toProcess[toProcessIdx++] = cur;
+
+                map[cur.x][cur.y].flag = 1;
             }
         }
-        if (center.y < cdata->windowHeight - 1)
+        else
         {
-            Tile* bot = &map[center.x][center.y + 1];
-            Pair cur;
-            cur.x = center.x;
-            cur.y = center.y + 1;
-
-            if (++bot->sand > 3)
-            {
-                if (bot->flag == 0)
-                {
-                    toProcess[toProcessIdx++] = cur;
-
-                    map[cur.x][cur.y].flag = 1;
-                }
-            }
-            else
-            {
-                map[cur.x][cur.y].flag = 0;
-            }
+            map[cur.x][cur.y].flag = 0;
         }
-        if (center.x > 0)
-        {
-            Tile* left = &map[center.x - 1][center.y];
-            Pair cur;
-            cur.x = center.x - 1;
-            cur.y = center.y;
+    }
+    if (center.x > 0)
+    {
+        Tile* left = &map[center.x - 1][center.y];
+        Pair cur;
+        cur.x = center.x - 1;
+        cur.y = center.y;
              
-            if (++left->sand > 3)
+        if (++left->sand > 3)
+        {
+            if (left->flag == 0)
             {
-                if (left->flag == 0)
-                {
-                    toProcess[toProcessIdx++] = cur;
+                toProcess[toProcessIdx++] = cur;
 
-                    map[cur.x][cur.y].flag = 1;
+                map[cur.x][cur.y].flag = 1;
 
-                }
-            }
-            else
-            {
-                map[cur.x][cur.y].flag = 0;
             }
         }
-        if (center.x < cdata->windowWidth - 1)
+        else
         {
-            Tile* right = &map[center.x + 1][center.y];
-            Pair cur;
-            cur.x = center.x + 1;
-            cur.y = center.y;
+            map[cur.x][cur.y].flag = 0;
+        }
+    }
+    if (center.x < cdata->windowWidth - 1)
+    {
+        Tile* right = &map[center.x + 1][center.y];
+        Pair cur;
+        cur.x = center.x + 1;
+        cur.y = center.y;
              
-            if (++right->sand > 3)
+        if (++right->sand > 3)
+        {
+            if (right->flag == 0)
             {
-                if (right->flag == 0)
-                {
-                    toProcess[toProcessIdx++] = cur;
+                toProcess[toProcessIdx++] = cur;
 
-                    map[cur.x][cur.y].flag = 1;
+                map[cur.x][cur.y].flag = 1;
 
-                }
             }
-            else
-            {
-                map[cur.x][cur.y].flag = 0;
-            }
+        }
+        else
+        {
+            map[cur.x][cur.y].flag = 0;
         }
     }
 
@@ -139,7 +134,18 @@ void update(const ContextData* cdata)
         prevProcess[i] = toProcess[i];
     }
 
-    prevProcessIdx = toProcessIdx;
+    prevProcessIdx = toProcessIdx;    
+}
+
+void update(const ContextData* cdata)
+{
+    unsigned y, x;
+    toProcessIdx = 0;
+        
+    for (y = 0; y < prevProcessIdx; ++y)
+    {
+        processOnePair(y, cdata);        
+    }
 }
 
 void updateColors(ContextData* cdata)
@@ -221,8 +227,8 @@ int main(int argc, char* argv[])
     contextData.minimalGLXVersionMinor = 3;
     contextData.minimalGLVersionMajor = 3;
     contextData.minimalGLVersionMinor = 3;
-    contextData.windowWidth = 1600;
-    contextData.windowHeight = 900;
+    contextData.windowWidth = 300;
+    contextData.windowHeight = 300;
     contextData.name = "Faith";
     
     configureOpenGL(&contextData);
@@ -235,7 +241,7 @@ int main(int argc, char* argv[])
     addSource(contextData.windowWidth * 0.60f, contextData.windowHeight / 2, 2000000);
 #endif
 
-    addEquilateralSources(3, 100, contextData.windowWidth, contextData.windowHeight, 2000000);
+    addEquilateralSources(1, 100, contextData.windowWidth, contextData.windowHeight, 400000000);
     
     unsigned texture;
     glGenTextures(1, &texture);
