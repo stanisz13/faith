@@ -332,6 +332,8 @@ int main(int argc, char* argv[])
     }
 
     clearConfigurationOfOpenGL(&contextData);
-
+        glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
     return 0;
 }

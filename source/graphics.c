@@ -284,6 +284,8 @@ void loadFunctionPointers()
     glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)glXGetProcAddress("glEnableVertexAttribArray");
     glUseProgram = (PFNGLUSEPROGRAMPROC)glXGetProcAddress("glUseProgram");
     glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)glXGetProcAddress("glBindVertexArray");
+    glDeleteBuffers = (PFNGLDELETEBUFFERSPROC)glXGetProcAddress("glDeleteBuffers");
+    glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)glXGetProcAddress("glDeleteVertexArrays");
 }
 
 
