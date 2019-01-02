@@ -83,7 +83,7 @@ void configureOpenGL(ContextData* cdata)
             None
         };
 
-    unsigned glx_major, glx_minor;
+    int glx_major, glx_minor;
  
     // Check if the version is not less than minimal
     if (!glXQueryVersion(cdata->display, &glx_major, &glx_minor))
@@ -131,9 +131,9 @@ void configureOpenGL(ContextData* cdata)
                    " SAMPLES = %d\n", 
                    i, vi->visualid, samp_buf, samples);
 #endif
-            if (best_fbc < 0 || samp_buf && samples > best_num_samp)
+            if (best_fbc < 0 || (samp_buf && samples > best_num_samp))
                 best_fbc = i, best_num_samp = samples;
-            if (worst_fbc < 0 || !samp_buf || samples < worst_num_samp)
+            if (worst_fbc < 0 || (!samp_buf || samples < worst_num_samp))
                 worst_fbc = i, worst_num_samp = samples;
         }
         
@@ -185,11 +185,14 @@ void configureOpenGL(ContextData* cdata)
     int (*oldHandler)(Display*, XErrorEvent*) =
         XSetErrorHandler(&ctxErrorHandler);
 
+    //logS(glxExts);
+     
     // Check for the GLX_ARB_create_context extension string and the function.
     if (!isExtensionSupported(glxExts, "GLX_ARB_create_context") ||
+        !isExtensionSupported(glxExts, "GLX_MESA_swap_control") ||
          !glXCreateContextAttribsARB)
     {
-        logError( "glXCreateContextAttribsARB() not found!");
+        logError("glXCreateContextAttribsARB() or one of required extensions not found!");
         exit(0);    
     }
     else
@@ -247,7 +250,7 @@ void configureOpenGL(ContextData* cdata)
     glXMakeCurrent(cdata->display, cdata->window, cdata->ctx);
 }
 
-void clearConfigurationOfOpenGL(ContextData* cdata)
+void freeContextData(ContextData* cdata)
 {
     glXMakeCurrent(cdata->display, 0, 0);
     glXDestroyContext(cdata->display, cdata->ctx);
@@ -259,109 +262,307 @@ void clearConfigurationOfOpenGL(ContextData* cdata)
 
 void loadFunctionPointers()
 {
-    //glGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC)glXGetProcAddress("glGenFramebuffers");
-    //glBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC)glXGetProcAddress("glBindFramebuffer");
-    //glFramebufferTexture2D = (PFNGLFRAMEBUFFERTEXTURE2DPROC)glXGetProcAddress("glFramebufferTexture2D");
+    //NOTE(Stanisz13): FRAMEBUFFERS
+    glGenFramebuffers_FA = (PFNGLGENFRAMEBUFFERSPROC)glXGetProcAddress((const unsigned char*)"glGenFramebuffers");
+    glBindFramebuffer_FA = (PFNGLBINDFRAMEBUFFERPROC)glXGetProcAddress((const unsigned char*)"glBindFramebuffer");
+    glFramebufferTexture2D_FA = (PFNGLFRAMEBUFFERTEXTURE2DPROC)glXGetProcAddress((const unsigned char*)"glFramebufferTexture2D");
 
+    //NOTE(Stanisz13): SHADERS
+    glCreateShader_FA = (PFNGLCREATESHADERPROC)glXGetProcAddress((const unsigned char*)"glCreateShader");
+    glShaderSource_FA = (PFNGLSHADERSOURCEPROC)glXGetProcAddress((const unsigned char*)"glShaderSource");
+    glCompileShader_FA = (PFNGLCOMPILESHADERPROC)glXGetProcAddress((const unsigned char*)"glCompileShader");
+    glGetShaderiv_FA = (PFNGLGETSHADERIVPROC)glXGetProcAddress((const unsigned char*)"glGetShaderiv");
+    glGetShaderInfoLog_FA = (PFNGLGETSHADERINFOLOGPROC)glXGetProcAddress((const unsigned char*)"glGetShaderInfoLog");
+    glAttachShader_FA = (PFNGLATTACHSHADERPROC)glXGetProcAddress((const unsigned char*)"glAttachShader");
+    glDeleteShader_FA = (PFNGLDELETESHADERPROC)glXGetProcAddress((const unsigned char*)"glDeleteShader");
+
+    //NOTE(Stanisz13): PROGRAMS
+    glCreateProgram_FA = (PFNGLCREATEPROGRAMPROC)glXGetProcAddress((const unsigned char*)"glCreateProgram");
+    glLinkProgram_FA = (PFNGLLINKPROGRAMPROC)glXGetProcAddress((const unsigned char*)"glLinkProgram");
+    glGetProgramiv_FA = (PFNGLGETPROGRAMIVPROC)glXGetProcAddress((const unsigned char*)"glGetProgramiv");
+    glGetProgramInfoLog_FA = (PFNGLGETPROGRAMINFOLOGPROC)glXGetProcAddress((const unsigned char*)"glGetProgramInfoLog");
+    glDeleteProgram_FA = (PFNGLDELETEPROGRAMPROC)glXGetProcAddress((const unsigned char*)"glDeleteProgram_FA");
+
+    //NOTE(Stanisz13): BUFFERS
+    glGenVertexArrays_FA = (PFNGLGENVERTEXARRAYSPROC)glXGetProcAddress((const unsigned char*)"glGenVertexArrays");
+    glGenBuffers_FA = (PFNGLGENBUFFERSPROC)glXGetProcAddress((const unsigned char*)"glGenBuffers");
+    glGenVertexArrays_FA = (PFNGLGENVERTEXARRAYSPROC)glXGetProcAddress((const unsigned char*)"glGenVertexArrays");
+    glBindBuffer_FA = (PFNGLBINDBUFFERPROC)glXGetProcAddress((const unsigned char*)"glBindBuffer");
+    glBufferData_FA = (PFNGLBUFFERDATAPROC)glXGetProcAddress((const unsigned char*)"glBufferData");
+    glVertexAttribPointer_FA = (PFNGLVERTEXATTRIBPOINTERPROC)glXGetProcAddress((const unsigned char*)"glVertexAttribPointer");
+    glEnableVertexAttribArray_FA = (PFNGLENABLEVERTEXATTRIBARRAYPROC)glXGetProcAddress((const unsigned char*)"glEnableVertexAttribArray");
+    glUseProgram_FA = (PFNGLUSEPROGRAMPROC)glXGetProcAddress((const unsigned char*)"glUseProgram");
+    glBindVertexArray_FA = (PFNGLBINDVERTEXARRAYPROC)glXGetProcAddress((const unsigned char*)"glBindVertexArray");
+    glDeleteBuffers_FA = (PFNGLDELETEBUFFERSPROC)glXGetProcAddress((const unsigned char*)"glDeleteBuffers_FA");
+    glDeleteVertexArrays_FA = (PFNGLDELETEVERTEXARRAYSPROC)glXGetProcAddress((const unsigned char*)"glDeleteVertexArrays_FA");
     
-    glCreateShader = (PFNGLCREATESHADERPROC)glXGetProcAddress("glCreateShader");
-    glShaderSource = (PFNGLSHADERSOURCEPROC)glXGetProcAddress("glShaderSource");
-    glCompileShader = (PFNGLCOMPILESHADERPROC)glXGetProcAddress("glCompileShader");
-    glGetShaderiv = (PFNGLGETSHADERIVPROC)glXGetProcAddress("glGetShaderiv");
-    glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)glXGetProcAddress("glGetShaderInfoLog");
-    glCreateProgram = (PFNGLCREATEPROGRAMPROC)glXGetProcAddress("glCreateProgram");
-    glAttachShader = (PFNGLATTACHSHADERPROC)glXGetProcAddress("glAttachShader");
-    glLinkProgram = (PFNGLLINKPROGRAMPROC)glXGetProcAddress("glLinkProgram");
-    glGetProgramiv = (PFNGLGETPROGRAMIVPROC)glXGetProcAddress("glGetProgramiv");
-    glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)glXGetProcAddress("glGetProgramInfoLog");
-    glDeleteShader = (PFNGLDELETESHADERPROC)glXGetProcAddress("glDeleteShader");
-    glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)glXGetProcAddress("glGenVertexArrays");
-    glGenBuffers = (PFNGLGENBUFFERSPROC)glXGetProcAddress("glGenBuffers");
-    glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)glXGetProcAddress("glGenVertexArrays");
-    glBindBuffer = (PFNGLBINDBUFFERPROC)glXGetProcAddress("glBindBuffer");
-    glBufferData = (PFNGLBUFFERDATAPROC)glXGetProcAddress("glBufferData");
-    glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)glXGetProcAddress("glVertexAttribPointer");
-    glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)glXGetProcAddress("glEnableVertexAttribArray");
-    glUseProgram = (PFNGLUSEPROGRAMPROC)glXGetProcAddress("glUseProgram");
-    glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)glXGetProcAddress("glBindVertexArray");
-    glDeleteBuffers = (PFNGLDELETEBUFFERSPROC)glXGetProcAddress("glDeleteBuffers");
-    glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)glXGetProcAddress("glDeleteVertexArrays");
-}
-
-
-unsigned createBasicProgram()
-{
-    unsigned vertex, fragment;
-    unsigned program;
-    int success;
-    char infoLog[512];
-    
-    const char* vsCode[] =
-        {
-            "#version 330 core\n"
-            "layout (location = 0) in vec3 aPos;\n"
-            "layout (location = 1) in vec2 aTexCoord;\n"
-            "out vec2 TexCoord;\n"
-            "void main()\n"
-            "{gl_Position = vec4(aPos, 1.0);\n"
-            "TexCoord = aTexCoord;}\n"
-        };
-    
-    vertex = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex, 1, vsCode, NULL);
-    glCompileShader(vertex);
-
-    glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
-    if(!success)
-    {
-        glGetShaderInfoLog(vertex, 512, NULL, infoLog);
-        printf("vertex shader error: %s\n", infoLog);
-    };
-
-    
-    const char* fsCode[] =
-        {
-            "#version 330 core\n"
-            "out vec4 FragColor;\n"
-            "in vec2 TexCoord;\n"
-            "uniform sampler2D ourTexture;\n"
-            "void main()\n"
-            "{\n"
-            "FragColor = texture(ourTexture, TexCoord);\n"
-            "}\n"
-        };
-    
-    fragment = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment, 1, fsCode, NULL);
-    glCompileShader(fragment);
-
-    glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
-    if(!success)
-    {
-        glGetShaderInfoLog(fragment, 512, NULL, infoLog);
-        printf("fragment shader error: %s\n", infoLog);
-    };
-
-    program = glCreateProgram();
-    glAttachShader(program, vertex);
-    glAttachShader(program, fragment);
-    glLinkProgram(program);
-
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if(!success)
-    {
-        glGetProgramInfoLog(program, 512, NULL, infoLog);
-        printf("%s\n", infoLog);     
-    }
-
-    glDeleteShader(vertex);
-    glDeleteShader(fragment);
-
-    return program;
+    //NOTE(Stanisz13): MISC
+    glXSwapIntervalMESA_FA = (PFNGLXSWAPINTERVALMESAPROC)glXGetProcAddress((const unsigned char*)"glXSwapIntervalMESA");
 }
 
 unsigned RGBAtoUnsigned(const unsigned char r, const unsigned char g,
                         const unsigned char b, const unsigned char a)
 {
     return (a << 24) | (b << 16) | (g << 8) | r;    
+}
+
+void createTextureForDrawingBuffer(ContextData* cdata, PixelBufferData* pdata)
+{    
+    glGenTextures(1, &pdata->texture);
+    glBindTexture(GL_TEXTURE_2D, pdata->texture);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
+
+    float vertices[] = {
+        // positions       // texture coords
+        1.0f,  1.0f, 0.0f, 1.0f, 1.0f, // top right
+        1.0f, -1.0f, 0.0f, 1.0f, 0.0f, // bottom right
+        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, // bottom left
+        -1.0f,  1.0f, 0.0f, 0.0f, 1.0f  // top left 
+    };
+
+    unsigned indices[] = {  
+        0, 1, 3, 2
+    };
+
+    unsigned int VBO, EBO;
+    glGenVertexArrays_FA(1, &pdata->VAO);
+    glGenBuffers_FA(1, &VBO);
+    glGenBuffers_FA(1, &EBO);
+
+    glBindVertexArray_FA(pdata->VAO);
+
+    glBindBuffer_FA(GL_ARRAY_BUFFER, VBO);
+    glBufferData_FA(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindBuffer_FA(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData_FA(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    // position attribute
+    glVertexAttribPointer_FA(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray_FA(0);
+    // texture coord attribute
+    glVertexAttribPointer_FA(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray_FA(1);
+}
+
+void drawTextureWithBufferData(ContextData* cdata, PixelBufferData* pdata)
+{
+    glBindTexture(GL_TEXTURE_2D, pdata->texture);
+        
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cdata->windowWidth, cdata->windowHeight,
+                 0, GL_RGBA, GL_UNSIGNED_BYTE, pdata->pixels);
+        
+    glUseProgram_FA(pdata->basicProgram);
+    glBindVertexArray_FA(pdata->VAO);
+    glDrawElements(GL_TRIANGLE_STRIP, 6, GL_UNSIGNED_INT, 0);
+}
+
+void freePixelData(PixelBufferData* pdata)
+{
+    free(pdata->pixels);
+}
+
+float lerp(const float v0, const float v1, const float t)
+{
+    return (1 - t) * v0 + t * v1;
+}
+
+Color lerpColor(const Color* a, const Color* b, const float t)
+{
+    Color res;
+    res.r = (unsigned char)lerp(a->r, b->r, t);
+    res.g = (unsigned char)lerp(a->g, b->g, t);
+    res.b = (unsigned char)lerp(a->b, b->b, t);
+    res.a = (unsigned char)lerp(a->a, b->a, t);
+
+    return res;     
+}
+
+unsigned ColorToUnsigned(const Color* c)
+{
+    return RGBAtoUnsigned(c->r, c->g, c->b, c->a);
+}
+
+Color RGBAtoColor(const unsigned char r, const unsigned char g,
+                  const unsigned char b, const unsigned char a)
+{
+    Color res;
+    res.r = r;
+    res.g = g;
+    res.b = b;
+    res.a = a;
+    
+    return res;
+}
+
+void configurePingpongBuffer(ContextData* cdata, PingpongBuffer* pbuf)
+{
+    glGenFramebuffers_FA(2, pbuf->fbo);
+    glGenTextures(2, pbuf->texture);
+    for (unsigned int i = 0; i < 2; i++)
+    {
+        glBindFramebuffer_FA(GL_FRAMEBUFFER, pbuf->fbo[i]);
+        glBindTexture(GL_TEXTURE_2D, pbuf->texture[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F,
+                     cdata->windowWidth, cdata->windowHeight,
+                     0, GL_RED, GL_FLOAT, 0);
+          
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D_FA(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                               GL_TEXTURE_2D, pbuf->texture[i], 0);
+    }        
+
+}
+
+void configureScreenQuadWithEBO(ScreenQuadWithEBO* squad)
+{
+    float screenQuadVerts[] =
+        {
+            1.0f,  1.0f,
+            -1.0f, 1.0f,
+            -1.0f, -1.0f,
+            1.0f, -1.0f,
+        };
+
+    unsigned indices[] =
+        {
+            0, 1, 3, 2
+        };
+
+    glGenVertexArrays_FA(1, &squad->VAO);
+    glGenBuffers_FA(1, &squad->VBO);
+    glGenBuffers_FA(1, &squad->EBO);
+    
+    glBindVertexArray_FA(squad->VAO);
+
+    glBindBuffer_FA(GL_ARRAY_BUFFER, squad->VBO);
+    glBufferData_FA(GL_ARRAY_BUFFER, sizeof(screenQuadVerts), &screenQuadVerts, GL_STATIC_DRAW);
+
+    glBindBuffer_FA(GL_ELEMENT_ARRAY_BUFFER, squad->EBO);
+    glBufferData_FA(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer_FA(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray_FA(0);
+}
+
+void configureScreenQuad(ScreenQuad* squad)
+{
+    float screenQuadVerts[] =
+        {
+            1.0f,  1.0f,
+            -1.0f, 1.0f,
+            -1.0f, -1.0f,
+            -1.0f, -1.0f,
+            1.0f, -1.0f,
+            1.0f, 1.0f
+        };
+
+    glGenVertexArrays_FA(1, &squad->VAO);
+    glGenBuffers_FA(1, &squad->VBO);
+    
+    glBindVertexArray_FA(squad->VAO);
+
+    glBindBuffer_FA(GL_ARRAY_BUFFER, squad->VBO);
+    glBufferData_FA(GL_ARRAY_BUFFER, sizeof(screenQuadVerts), &screenQuadVerts, GL_STATIC_DRAW);
+
+    glVertexAttribPointer_FA(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray_FA(0);
+    
+}
+
+
+void freeScreenQuad(ScreenQuad* squad)
+{
+    glDeleteBuffers_FA(1, &squad->VBO);
+    glDeleteVertexArrays_FA(1, &squad->VAO);
+}
+
+void freeScreenQuadWithEBO(ScreenQuadWithEBO* squad)
+{
+    glDeleteBuffers_FA(1, &squad->VBO);
+    glDeleteVertexArrays_FA(1, &squad->VAO);
+    glDeleteBuffers_FA(1, &squad->EBO);
+}
+
+void loadEntireFile(const char* path, unsigned char** source)
+{
+    FILE* file = fopen(path, "r");
+    
+    fseek(file, 0, SEEK_END);
+    unsigned fileSize = ftell(file); 
+    fseek(file, 0, SEEK_SET);
+
+    *source = (unsigned char *)calloc(1, fileSize + 1);
+    memset(*source, 0, fileSize + 1);
+
+    if (fread(*source, fileSize, 1, file) != 1) {
+        logError("Failed reading file!");
+        logError(path);
+        
+        return;
+    }
+         
+    fclose(file);
+}
+
+unsigned createShaderProgram(const char* pathToVS, const char* pathToFS)
+{
+    unsigned vertex, fragment;
+    unsigned program;
+    int success;
+    char infoLog[512];
+
+    unsigned char* vsCode;
+    unsigned char* fsCode;
+    loadEntireFile(pathToVS, &vsCode);
+    loadEntireFile(pathToFS, &fsCode);
+    
+    vertex = glCreateShader_FA(GL_VERTEX_SHADER);
+    fragment = glCreateShader_FA(GL_FRAGMENT_SHADER);
+    glShaderSource_FA(vertex, 1, (const char**)&vsCode, NULL);
+    glShaderSource_FA(fragment, 1, (const char**)&fsCode, NULL);
+    
+    glCompileShader_FA(vertex);
+    glCompileShader_FA(fragment);
+    
+    glGetShaderiv_FA(vertex, GL_COMPILE_STATUS, &success);
+
+    if(!success)
+    {
+        glGetShaderInfoLog_FA(vertex, 512, NULL, infoLog);
+        printf("vertex shader error: %s\n", infoLog);
+    }
+
+    glGetShaderiv_FA(fragment, GL_COMPILE_STATUS, &success);
+
+    if(!success)
+    {
+        glGetShaderInfoLog_FA(fragment, 512, NULL, infoLog);
+        printf("fragment shader error: %s\n", infoLog);
+    }
+    
+    program = glCreateProgram_FA();
+    glAttachShader_FA(program, vertex);
+    glAttachShader_FA(program, fragment);
+    glLinkProgram_FA(program);
+
+    glGetProgramiv_FA(program, GL_LINK_STATUS, &success);
+    if(!success)
+    {
+        glGetProgramInfoLog_FA(program, 512, NULL, infoLog);
+        printf("%s\n", infoLog);     
+    }
+
+    glDeleteShader_FA(vertex);
+    glDeleteShader_FA(fragment);
+
+    free(vsCode);
+    free(fsCode);
+    
+    return program;
 }

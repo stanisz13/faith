@@ -21,3 +21,8 @@ void logI(const int s)
 {
     printf("%d\n", s);
 }
+
+void newLine()
+{
+    printf("\n");
+}

@@ -11,4 +11,6 @@ void logU(const unsigned s);
 
 void logI(const int s);
 
+void newLine();
+
 #endif
