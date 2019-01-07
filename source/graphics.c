@@ -47,7 +47,15 @@ int ctxErrorHandler(Display *dpy, XErrorEvent *ev)
     return 0;
 }
 
-void configureOpenGL(ContextData* cdata)
+typedef enum 
+{
+    MESA_V_SYNC = 1,
+    EXT_V_SYNC = 2,
+    SGI_V_SYNC = 4
+    
+} UserVSyncDataMasks;
+
+void configureOpenGL(ContextData* cdata, UserVSyncData* udata)
 {
     // Open a comminication to X server with default screen name.
     cdata->display = XOpenDisplay(NULL);
@@ -189,14 +197,26 @@ void configureOpenGL(ContextData* cdata)
      
     // Check for the GLX_ARB_create_context extension string and the function.
     if (!isExtensionSupported(glxExts, "GLX_ARB_create_context") ||
-        !isExtensionSupported(glxExts, "GLX_MESA_swap_control") ||
          !glXCreateContextAttribsARB)
     {
-        logError("glXCreateContextAttribsARB() or one of required extensions not found!");
+        logError("glXCreateContextAttribsARB() not found!");
         exit(0);    
     }
     else
     {
+        if (isExtensionSupported(glxExts, "GLX_MESA_swap_control"))
+        {
+            udata->mask |= MESA_V_SYNC;
+        }
+        if (isExtensionSupported(glxExts, "GLX_EXT_swap_control_tear"))
+        {
+            udata->mask |= EXT_V_SYNC;
+        }
+        if (isExtensionSupported(glxExts, "GLX_SGI_swap_control"))
+        {
+            udata->mask |= SGI_V_SYNC;
+        }
+
         int context_attribs[] =
             {
                 GLX_CONTEXT_MAJOR_VERSION_ARB, cdata->minimalGLVersionMajor,
@@ -276,6 +296,10 @@ void loadFunctionPointers()
     glAttachShader_FA = (PFNGLATTACHSHADERPROC)glXGetProcAddress((const unsigned char*)"glAttachShader");
     glDeleteShader_FA = (PFNGLDELETESHADERPROC)glXGetProcAddress((const unsigned char*)"glDeleteShader");
 
+    //NOTE(Stanisz13): UNIFORMS
+    glGetUniformLocation_FA = (PFNGLGETUNIFORMLOCATIONPROC)glXGetProcAddress((const unsigned char*)"glGetUniformLocation");
+    glUniform1f_FA = (PFNGLUNIFORM1FPROC)glXGetProcAddress((const unsigned char*)"glUniform1f");
+        
     //NOTE(Stanisz13): PROGRAMS
     glCreateProgram_FA = (PFNGLCREATEPROGRAMPROC)glXGetProcAddress((const unsigned char*)"glCreateProgram");
     glLinkProgram_FA = (PFNGLLINKPROGRAMPROC)glXGetProcAddress((const unsigned char*)"glLinkProgram");
@@ -296,8 +320,10 @@ void loadFunctionPointers()
     glDeleteBuffers_FA = (PFNGLDELETEBUFFERSPROC)glXGetProcAddress((const unsigned char*)"glDeleteBuffers_FA");
     glDeleteVertexArrays_FA = (PFNGLDELETEVERTEXARRAYSPROC)glXGetProcAddress((const unsigned char*)"glDeleteVertexArrays_FA");
     
-    //NOTE(Stanisz13): MISC
+    //NOTE(Stanisz13): V_SYNC
     glXSwapIntervalMESA_FA = (PFNGLXSWAPINTERVALMESAPROC)glXGetProcAddress((const unsigned char*)"glXSwapIntervalMESA");
+    glXSwapIntervalEXT_FA = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress((const unsigned char*)"glXSwapIntervalEXT_FA");
+    glXSwapIntervalSGI_FA = (PFNGLXSWAPINTERVALSGIPROC)glXGetProcAddress((const unsigned char*)"glXSwapIntervalSGI_FA");
 }
 
 unsigned RGBAtoUnsigned(const unsigned char r, const unsigned char g,
@@ -565,4 +591,93 @@ unsigned createShaderProgram(const char* pathToVS, const char* pathToFS)
     free(fsCode);
     
     return program;
+}
+
+
+void disableVSyncIfPossible(ContextData* cdata, UserVSyncData* udata)
+{
+    if (udata->mask == 0)
+    {
+        logWarning("No extension supporting v-sync control found! Will run without it...");
+        return;
+    }
+
+    logWarning("V-SYNC DISABLED!");
+
+    if (udata->mask & MESA_V_SYNC)
+    {
+        glXSwapIntervalMESA_FA(0);
+        return;
+    }
+
+    if (udata->mask & EXT_V_SYNC)
+    {
+        glXSwapIntervalEXT_FA(cdata->display, glXGetCurrentDrawable(), 0);
+        return;
+    }
+
+    if (udata->mask & SGI_V_SYNC)
+    {
+        glXSwapIntervalSGI_FA(0);
+        return;
+    }
+}
+
+void enableVSyncIfPossible(ContextData* cdata, UserVSyncData* udata)
+{
+    if (udata->mask == 0)
+    {
+        logWarning("No extension supporting v-sync control found! Will run without it...");
+        return;
+    }
+
+    logWarning("V-SYNC ENABLED!");
+    
+    if (udata->mask & MESA_V_SYNC)
+    {
+        glXSwapIntervalMESA_FA(1);
+        return;
+    }
+
+    if (udata->mask & EXT_V_SYNC)
+    {
+        glXSwapIntervalEXT_FA(cdata->display, glXGetCurrentDrawable(), 1);
+        return;
+    }
+
+    if (udata->mask & SGI_V_SYNC)
+    {
+        glXSwapIntervalSGI_FA(1);
+        return;
+    }
+}
+
+
+void enableAdaptiveVSyncIfPossible(ContextData* cdata, UserVSyncData* udata)
+{
+    if (udata->mask == 0)
+    {
+        logWarning("No extension supporting v-sync control found! Will run without configuring it...");
+        return;
+    }
+
+    logWarning("ADAPTIVE V-SYNC ENABLED!");
+    
+    if (udata->mask & MESA_V_SYNC)
+    {
+        glXSwapIntervalMESA_FA(-1);
+        return;
+    }
+
+    if (udata->mask & EXT_V_SYNC)
+    {
+        glXSwapIntervalEXT_FA(cdata->display, glXGetCurrentDrawable(), -1);
+        return;
+    }
+
+    if (udata->mask & SGI_V_SYNC)
+    {
+        glXSwapIntervalSGI_FA(-1);
+        return;
+    }
 }

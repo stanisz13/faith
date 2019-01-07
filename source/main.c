@@ -1,5 +1,6 @@
 #include "graphics.h"
 #include <math.h>
+#include <time.h>
 
 int isRunning = 1;
 
@@ -13,11 +14,13 @@ int main(int argc, char* argv[])
     contextData.minimalGLXVersionMinor = 3;
     contextData.minimalGLVersionMajor = 3;
     contextData.minimalGLVersionMinor = 3;
-    contextData.windowWidth = 400;
-    contextData.windowHeight = 400;
+    contextData.windowWidth = 1920;
+    contextData.windowHeight = 1080;
     contextData.name = "Faith";
 
-    configureOpenGL(&contextData);
+    UserVSyncData userVSyncData;
+
+    configureOpenGL(&contextData, &userVSyncData);
     loadFunctionPointers();
 
     
@@ -29,15 +32,14 @@ int main(int argc, char* argv[])
     configureScreenQuad(&squad);
 #endif
 
-    unsigned basic = createShaderProgram("shaders/basic.vs", "shaders/basic.fs");
-    glUseProgram_FA(basic);    
-
-
+    
     glDisable(GL_DEPTH_TEST);
-
-#if V_SYNC == 0
-    glXSwapIntervalMESA_FA(0);
+#if 0
+    disableVSyncIfPossible(&contextData, &userVSyncData);
 #endif
+
+    clock_t prevTime = clock();
+    double dt = 0.0f;
     
     while(1)
     {        
@@ -62,7 +64,7 @@ int main(int argc, char* argv[])
 
         glClearColor(0, 0.5, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT);
-
+        
 #if USE_EBO_TO_DRAW_QUAD == 1
         glDrawElements(GL_TRIANGLE_STRIP, 6, GL_UNSIGNED_INT, 0);
 #else
@@ -70,7 +72,10 @@ int main(int argc, char* argv[])
 #endif
         
         glXSwapBuffers(contextData.display, contextData.window);
-        
+
+        clock_t nowTime = clock();
+        dt = (nowTime - prevTime) *100000.0f / CLOCKS_PER_SEC;
+        prevTime = nowTime;
         //sleep(1);
     }
 
@@ -82,7 +87,6 @@ int main(int argc, char* argv[])
     freeScreenQuad(&squad);
 #endif
 
-    glDeleteProgram_FA(basic);
     
     return 0;
 }

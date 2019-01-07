@@ -1,4 +1,4 @@
-CXX = gcc-8
+CXX = gcc
 SRCS_DIR = source
 
 CXXFLAGS = -Wall -Wshadow

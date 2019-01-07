@@ -27,6 +27,10 @@ PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog_FA;
 PFNGLATTACHSHADERPROC glAttachShader_FA;
 PFNGLDELETESHADERPROC glDeleteShader_FA;
 
+//NOTE(Stanisz13): UNIFORMS
+PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation_FA;
+PFNGLUNIFORM1FPROC glUniform1f_FA;
+
 //NOTE(Stanisz13): PROGRAMS
 PFNGLCREATEPROGRAMPROC glCreateProgram_FA;
 PFNGLLINKPROGRAMPROC glLinkProgram_FA;
@@ -47,8 +51,10 @@ PFNGLBINDVERTEXARRAYPROC glBindVertexArray_FA;
 PFNGLDELETEBUFFERSPROC glDeleteBuffers_FA;
 PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays_FA;
 
-//NOTE(Stanisz13): MISC
+//NOTE(Stanisz13): V_SYNC
 PFNGLXSWAPINTERVALMESAPROC glXSwapIntervalMESA_FA;
+PFNGLXSWAPINTERVALEXTPROC glXSwapIntervalEXT_FA;
+PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI_FA;
 
 typedef struct
 {
@@ -68,6 +74,12 @@ typedef struct
     Atom deleteMessage;
     
 } ContextData;
+
+typedef struct
+{
+    unsigned mask;
+
+} UserVSyncData;
 
 typedef struct
 {
@@ -106,7 +118,7 @@ typedef struct
     
 } ScreenQuad;
 
-void configureOpenGL(ContextData* cdata);
+void configureOpenGL(ContextData* cdata, UserVSyncData* udata);
 
 void freeContextData(ContextData* cdata);
 
@@ -143,5 +155,11 @@ void freeScreenQuad(ScreenQuad* squad);
 void freeScreenQuadWithEBO(ScreenQuadWithEBO* squad);
 
 unsigned createShaderProgram(const char* pathToVS, const char* pathToFS);
+
+void enableVSyncIfPossible(ContextData* cdata, UserVSyncData* udata);
+
+void disableVSyncIfPossible(ContextData* cdata, UserVSyncData* udata);
+
+void enableAdaptiveVSyncIfPossible(ContextData* cdata, UserVSyncData* udata);
 
 #endif
