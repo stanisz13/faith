@@ -1,5 +1,5 @@
-#ifndef GLLOADER_H
-#define GLLOADER_H
+#ifndef GRAPHICS_FA_H
+#define GRAPHICS_FA_H
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -8,7 +8,7 @@
 #include <GL/gl.h>
 #include <GL/glx.h>
 #include "glext.h"
-#include "log.h"
+#include "log_FA.h"
 
 #define USE_EBO_TO_DRAW_QUAD 1
 #define V_SYNC 0 
@@ -30,6 +30,18 @@ PFNGLDELETESHADERPROC glDeleteShader_FA;
 //NOTE(Stanisz13): UNIFORMS
 PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation_FA;
 PFNGLUNIFORM1FPROC glUniform1f_FA;
+PFNGLUNIFORM2FPROC glUniform2f_FA;
+PFNGLUNIFORM2FVPROC glUniform1fv_FA;
+PFNGLUNIFORM2FVPROC glUniform2fv_FA;
+PFNGLUNIFORM1UIPROC glUniform1ui_FA;
+PFNGLUNIFORM1UIVPROC glUniform1uiv_FA;
+PFNGLUNIFORM1IPROC glUniform1i_FA;
+PFNGLUNIFORM1IVPROC glUniform1iv_FA;
+PFNGLUNIFORM3FPROC glUniform3f_FA;
+PFNGLUNIFORM3FVPROC glUniform3fv_FA;
+PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv_FA;
+PFNGLUNIFORMMATRIX3FVPROC glUniformMatrix3fv_FA;
+PFNGLUNIFORMMATRIX2FVPROC glUniformMatrix2fv_FA;
 
 //NOTE(Stanisz13): PROGRAMS
 PFNGLCREATEPROGRAMPROC glCreateProgram_FA;
@@ -124,8 +136,8 @@ void freeContextData(ContextData* cdata);
 
 void loadFunctionPointers();
 
-unsigned RGBAtoUnsigned(const unsigned char r, const unsigned char g,
-                        const unsigned char b, const unsigned char a);
+unsigned RGBAtoUnsigned(unsigned char r, unsigned char g,
+                        unsigned char b, unsigned char a);
 
 unsigned ColorToUnsigned(const Color* c);
 
@@ -135,14 +147,14 @@ void drawTextureWithBufferData(ContextData* cdata, PixelBufferData* pdata);
 
 void freePixelData(PixelBufferData* pdata);
 
-float lerpFloat(const float v0, const float v1, const float t);
+float lerpFloat(float v0, float v1, float t);
 
 Color lerpColor(const Color* a, const Color* b, const float t);
 
 unsigned ColorToUnsigned(const Color* c);
 
-Color RGBAtoColor(const unsigned char r, const unsigned char g,
-                  const unsigned char b, const unsigned char a);
+Color RGBAtoColor(unsigned char r, unsigned char g,
+                  unsigned char b, unsigned char a);
 
 void configurePingpongBuffer(ContextData* cdata, PingpongBuffer* pbuf);
 

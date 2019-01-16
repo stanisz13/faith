@@ -5,7 +5,7 @@ CXXFLAGS = -Wall -Wshadow
 DEBUG_FLAGS = -O0 -fsanitize=undefined -fsanitize=address
 RELEASE_FLAGS = -O3 -flto
 
-LD_FLAGS = $(LD_DIRS) -lX11 -lGL
+LD_FLAGS = $(LD_DIRS) -lX11 -lGL -lm
 
 BUILD_DIR = build
 DEBUG_BUILD_DIR = $(BUILD_DIR)/debug

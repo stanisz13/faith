@@ -1,4 +1,4 @@
-#include "graphics.h"
+#include "graphics_FA.h"
 
 #define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
 #define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
@@ -189,7 +189,7 @@ void configureOpenGL(ContextData* cdata, UserVSyncData* udata)
     glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
     glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)
         glXGetProcAddressARB((const GLubyte *)"glXCreateContextAttribsARB");
-
+    
     int (*oldHandler)(Display*, XErrorEvent*) =
         XSetErrorHandler(&ctxErrorHandler);
 
@@ -217,6 +217,7 @@ void configureOpenGL(ContextData* cdata, UserVSyncData* udata)
             udata->mask |= SGI_V_SYNC;
         }
 
+        
         int context_attribs[] =
             {
                 GLX_CONTEXT_MAJOR_VERSION_ARB, cdata->minimalGLVersionMajor,
@@ -299,13 +300,26 @@ void loadFunctionPointers()
     //NOTE(Stanisz13): UNIFORMS
     glGetUniformLocation_FA = (PFNGLGETUNIFORMLOCATIONPROC)glXGetProcAddress((const unsigned char*)"glGetUniformLocation");
     glUniform1f_FA = (PFNGLUNIFORM1FPROC)glXGetProcAddress((const unsigned char*)"glUniform1f");
-        
+    glUniform2f_FA = (PFNGLUNIFORM2FPROC)glXGetProcAddress((const unsigned char*)"glUniform2f");
+    glUniform1fv_FA = (PFNGLUNIFORM2FVPROC)glXGetProcAddress((const unsigned char*)"glUniform1fv");
+    glUniform2fv_FA = (PFNGLUNIFORM2FVPROC)glXGetProcAddress((const unsigned char*)"glUniform2fv");
+    glUniform1ui_FA = (PFNGLUNIFORM1UIPROC)glXGetProcAddress((const unsigned char*)"glUniform1ui");
+    glUniform1uiv_FA = (PFNGLUNIFORM1UIVPROC)glXGetProcAddress((const unsigned char*)"glUniform1uiv");
+    glUniform1i_FA = (PFNGLUNIFORM1IPROC)glXGetProcAddress((const unsigned char*)"glUniform1i");
+    glUniform1iv_FA = (PFNGLUNIFORM1IVPROC)glXGetProcAddress((const unsigned char*)"glUniform1iv");
+    glUniform3f_FA = (PFNGLUNIFORM3FPROC)glXGetProcAddress((const unsigned char*)"glUniform3f");
+    glUniform3fv_FA = (PFNGLUNIFORM3FVPROC)glXGetProcAddress((const unsigned char*)"glUniform3fv");
+    glUniformMatrix4fv_FA = (PFNGLUNIFORMMATRIX4FVPROC)glXGetProcAddress((const unsigned char*)"glUniformMatrix4fv");
+    glUniformMatrix3fv_FA = (PFNGLUNIFORMMATRIX3FVPROC)glXGetProcAddress((const unsigned char*)"glUniformMatrix3fv");
+    glUniformMatrix2fv_FA = (PFNGLUNIFORMMATRIX2FVPROC)glXGetProcAddress((const unsigned char*)"glUniformMatrix2fv");
+    
     //NOTE(Stanisz13): PROGRAMS
     glCreateProgram_FA = (PFNGLCREATEPROGRAMPROC)glXGetProcAddress((const unsigned char*)"glCreateProgram");
     glLinkProgram_FA = (PFNGLLINKPROGRAMPROC)glXGetProcAddress((const unsigned char*)"glLinkProgram");
     glGetProgramiv_FA = (PFNGLGETPROGRAMIVPROC)glXGetProcAddress((const unsigned char*)"glGetProgramiv");
     glGetProgramInfoLog_FA = (PFNGLGETPROGRAMINFOLOGPROC)glXGetProcAddress((const unsigned char*)"glGetProgramInfoLog");
-    glDeleteProgram_FA = (PFNGLDELETEPROGRAMPROC)glXGetProcAddress((const unsigned char*)"glDeleteProgram_FA");
+    glDeleteProgram_FA = (PFNGLDELETEPROGRAMPROC)glXGetProcAddress((const unsigned char*)"glDeleteProgram");
+    glUseProgram_FA = (PFNGLUSEPROGRAMPROC)glXGetProcAddress((const unsigned char*)"glUseProgram");
 
     //NOTE(Stanisz13): BUFFERS
     glGenVertexArrays_FA = (PFNGLGENVERTEXARRAYSPROC)glXGetProcAddress((const unsigned char*)"glGenVertexArrays");
@@ -317,17 +331,17 @@ void loadFunctionPointers()
     glEnableVertexAttribArray_FA = (PFNGLENABLEVERTEXATTRIBARRAYPROC)glXGetProcAddress((const unsigned char*)"glEnableVertexAttribArray");
     glUseProgram_FA = (PFNGLUSEPROGRAMPROC)glXGetProcAddress((const unsigned char*)"glUseProgram");
     glBindVertexArray_FA = (PFNGLBINDVERTEXARRAYPROC)glXGetProcAddress((const unsigned char*)"glBindVertexArray");
-    glDeleteBuffers_FA = (PFNGLDELETEBUFFERSPROC)glXGetProcAddress((const unsigned char*)"glDeleteBuffers_FA");
-    glDeleteVertexArrays_FA = (PFNGLDELETEVERTEXARRAYSPROC)glXGetProcAddress((const unsigned char*)"glDeleteVertexArrays_FA");
+    glDeleteBuffers_FA = (PFNGLDELETEBUFFERSPROC)glXGetProcAddress((const unsigned char*)"glDeleteBuffers");
+    glDeleteVertexArrays_FA = (PFNGLDELETEVERTEXARRAYSPROC)glXGetProcAddress((const unsigned char*)"glDeleteVertexArrays");
     
     //NOTE(Stanisz13): V_SYNC
     glXSwapIntervalMESA_FA = (PFNGLXSWAPINTERVALMESAPROC)glXGetProcAddress((const unsigned char*)"glXSwapIntervalMESA");
-    glXSwapIntervalEXT_FA = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress((const unsigned char*)"glXSwapIntervalEXT_FA");
-    glXSwapIntervalSGI_FA = (PFNGLXSWAPINTERVALSGIPROC)glXGetProcAddress((const unsigned char*)"glXSwapIntervalSGI_FA");
+    glXSwapIntervalEXT_FA = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress((const unsigned char*)"glXSwapIntervalEXT");
+    glXSwapIntervalSGI_FA = (PFNGLXSWAPINTERVALSGIPROC)glXGetProcAddress((const unsigned char*)"glXSwapIntervalSGI");
 }
 
-unsigned RGBAtoUnsigned(const unsigned char r, const unsigned char g,
-                        const unsigned char b, const unsigned char a)
+unsigned RGBAtoUnsigned(unsigned char r, unsigned char g,
+                        unsigned char b, unsigned char a)
 {
     return (a << 24) | (b << 16) | (g << 8) | r;    
 }
@@ -390,7 +404,7 @@ void freePixelData(PixelBufferData* pdata)
     free(pdata->pixels);
 }
 
-float lerp(const float v0, const float v1, const float t)
+float lerp(float v0, float v1, float t)
 {
     return (1 - t) * v0 + t * v1;
 }
